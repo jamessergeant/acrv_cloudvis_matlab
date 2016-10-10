@@ -23,7 +23,7 @@ classdef WebcamVisionService < handle
         results
         activation_threshold = 0.1
         multiplier
-        save_dir = '/home/james/Dropbox/PhD/Faster-RCNN'
+        save_dir
     end
     
     methods
@@ -34,6 +34,7 @@ classdef WebcamVisionService < handle
             p.CaseSensitive = false;
             p.PartialMatching = false;
             addParameter(p,'algorithm','objectDetection',@ischar);
+            addParameter(p,'save_dir','/home/james/Dropbox/PhD/Faster-RCNN',@ischar);
             
             parse(p,varargin{:});            
             
