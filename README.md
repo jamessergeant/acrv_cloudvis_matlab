@@ -6,7 +6,9 @@ MATLAB class for sending webcam images to ACRV Cloud Robotic Vision System
 ```
 % can provide a string input for other algorithms, default is 'objectDetection' which utilises Faster-RCNN
 % Currently only objectDetection results parsing is implemented
-wvs = WebcamVisionService('algorithm','objectDetection','save_dir','path/to/save/dir'); 
+% save_dir for saving of rendered image
+% confidence_threshold for ignoring regions upon rendering with classification values less than this
+wvs = WebcamVisionService('algorithm','objectDetection','save_dir','path/to/save/dir','confidence_threshold',0.1); 
 
 % to send a single image
 wvs.singleimage()

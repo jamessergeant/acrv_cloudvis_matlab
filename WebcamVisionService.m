@@ -21,7 +21,7 @@ classdef WebcamVisionService < handle
         algorithm
         fig
         results
-        activation_threshold = 0.1
+        confidence_threshold
         multiplier
         save_dir
     end
@@ -35,6 +35,7 @@ classdef WebcamVisionService < handle
             p.PartialMatching = false;
             addParameter(p,'algorithm','objectDetection',@ischar);
             addParameter(p,'save_dir','/home/james/Dropbox/PhD/Faster-RCNN',@ischar);
+            addParameter(p,'confidence_threshold',0.1,@isnumeric);
             
             parse(p,varargin{:});            
             
@@ -107,6 +108,7 @@ classdef WebcamVisionService < handle
         
         function continuous(obj)
             
+            close all
             obj.fig = figure;
             
             warning('off','images:initSize:adjustingMag');
@@ -182,7 +184,7 @@ classdef WebcamVisionService < handle
 
                     for j = 1:length(obj.output.(fields{i}))
 
-                        if obj.output.(fields{i})(j).confidence > obj.activation_threshold
+                        if obj.output.(fields{i})(j).confidence > obj.confidence_threshold
 
                             width = obj.output.(fields{i})(j).bb.br.x - obj.output.(fields{i})(j).bb.tl.x;
                             height = obj.output.(fields{i})(j).bb.br.y - obj.output.(fields{i})(j).bb.tl.y;
