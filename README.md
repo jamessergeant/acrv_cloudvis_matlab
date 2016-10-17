@@ -1,6 +1,8 @@
 # webcam_cloudvis
 MATLAB class for sending webcam images to ACRV Cloud Robotic Vision System
 
+Requires: https://www.dropbox.com/s/cxdhoa1qm5u2ke7/Demo.zip?dl=0
+
 ## Example use
 
 Setup:
