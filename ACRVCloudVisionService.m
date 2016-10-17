@@ -31,7 +31,7 @@ classdef ACRVCloudVisionService < handle
     
     methods
         
-        function obj = WebcamVisionService(varargin)
+        function obj = ACRVCloudVisionService(varargin)
             
             p = inputParser;
             p.CaseSensitive = false;
