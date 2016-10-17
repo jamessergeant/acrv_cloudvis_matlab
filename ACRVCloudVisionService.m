@@ -1,10 +1,12 @@
-classdef WebcamVisionService < handle
+classdef ACRVCloudVisionService < handle
     % WEBCAMVISIONSERVICE
     % 
     % objectDetection detects objects of the following classes:
     % Aeroplane, bicycle, bird, boat, bottle, bus, car, cat, chair, cow, 
     % dining table, dog, horse, motorbike, person, potted plant, sheep, 
     % sofa, train, tv monitor 
+    %
+    % Author: James Sergeant, james.sergeant@qut.edu.au
     
     properties (SetAccess = private)
         
@@ -24,6 +26,7 @@ classdef WebcamVisionService < handle
         confidence_threshold
         multiplier
         save_dir
+        webcam_initialised = false
     end
     
     methods
@@ -44,6 +47,11 @@ classdef WebcamVisionService < handle
             for i = 1:numel(fields)
             	obj.(fields{i}) = p.Results.(fields{i});
             end
+            
+        end
+        
+        function initWebcam(obj)
+            
             
             wcl = webcamlist;
             
@@ -68,10 +76,16 @@ classdef WebcamVisionService < handle
         end
             
         
-        function singleimage(obj)
+        function webcamSingleImage(obj)
+            
+            if ~obj.webcam_initialised
+                obj.initWebcam;
+            end
+            
             
             obj.image = snapshot(obj.camera);
                
+            % unfortunately need to save to an image file
             if ~isdir('~/.tmp/')
                 mkdir('~/.tmp/');
             end
@@ -85,6 +99,67 @@ classdef WebcamVisionService < handle
             obj.post_process();
             
         end
+        
+        function webcamContinuous(obj)
+            
+            close all
+            obj.fig = figure;
+            
+            warning('off','images:initSize:adjustingMag');
+            
+            while (1)
+                
+                obj.webcamSingleImage();
+                
+                imshow(obj.image_rendered);
+                
+            end
+
+            
+        end
+        
+        function fileImage(obj,filename)
+            
+            obj.image = imread(filename);
+            
+            imageFile = fopen(filename);
+            imageFile = fread(imageFile,Inf,'*uint8');
+
+            obj.results = urlreadpost([obj.root_url obj.algorithm],{'image',imageFile});
+            
+            obj.post_process();
+            
+        end
+        
+        function fileDirectory(obj,directory)
+            
+            %poorly implemented, does the job for now
+            png_files = dir([directory '/*.png']);
+            jpg_files = dir([directory '/*.jpg']);
+            PNG_files = dir([directory '/*.PNG']);
+            JPG_files = dir([directory '/*.JPG']);
+            
+            for i = 1:length(png_files)
+                obj.fileImage([directory '/' png_files(i).name]);
+            end
+            
+            for i = 1:length(jpg_files)
+                obj.fileImage([directory '/' jpg_files(i).name]);
+            end
+            
+            for i = 1:length(PNG_files)
+                obj.fileImage([directory '/' PNG_files(i).name]);
+            end
+            
+            for i = 1:length(JPG_files)
+                obj.fileImage([directory '/' JPG_files(i).name]);
+            end
+            
+        end
+        
+    end
+    
+    methods (Access = private)
         
         function post_process(obj)
             
@@ -103,24 +178,6 @@ classdef WebcamVisionService < handle
                     fprintf('Post processing has not been implemented for the current algorithm\n');
                     
             end
-            
-        end
-        
-        function continuous(obj)
-            
-            close all
-            obj.fig = figure;
-            
-            warning('off','images:initSize:adjustingMag');
-            
-            while (1)
-                
-                obj.singleimage();
-                
-                imshow(obj.image_rendered);
-                
-            end
-
             
         end
         
@@ -178,7 +235,7 @@ classdef WebcamVisionService < handle
                 
                 fields = fieldnames(obj.output);
 
-                colours = 'ymcrgbw';
+%                 colours = 'mcrgbwy';
 
                 for i = 1:length(fields)
 
@@ -190,9 +247,9 @@ classdef WebcamVisionService < handle
                             height = obj.output.(fields{i})(j).bb.br.y - obj.output.(fields{i})(j).bb.tl.y;
 
                             rectangle = int32([obj.output.(fields{i})(j).bb.tl.x obj.output.(fields{i})(j).bb.tl.y width height]);
-
-                            obj.image_rendered = insertShape(obj.image_rendered, 'rectangle', rectangle, 'color',colours(i),'opacity', obj.output.(fields{i})(j).confidence);
-                            obj.image_rendered = insertText(obj.image_rendered, rectangle(1:2), [fields{i} ': ' num2str(obj.output.(fields{i})(j).confidence)],'BoxOpacity',0.2,'boxcolor',colours(i),'textcolor',colours(i));
+                            color = (rand(1,3) / 4 + 0.75) * 255;
+                            obj.image_rendered = insertShape(obj.image_rendered, 'rectangle', rectangle, 'color',color,'opacity', obj.output.(fields{i})(j).confidence,'linewidth',2);
+                            obj.image_rendered = insertText(obj.image_rendered, rectangle(1:2), [fields{i} ': ' num2str(obj.output.(fields{i})(j).confidence)],'boxcolor',color,'textcolor','black');
 
                         end
 
@@ -210,8 +267,9 @@ classdef WebcamVisionService < handle
             if ~isdir(obj.save_dir)
                 mkdir(obj.save_dir);
             end
-            
-            imwrite(obj.image_rendered,[obj.save_dir '/trial-' num2str(now) '.png']);
+            id = strcat(num2str(fix(clock)));
+            id = id(id~=' ');
+            imwrite(obj.image_rendered,[obj.save_dir '/trial-' id '.png']);
             
         end
         
